@@ -292,46 +292,53 @@ class _MenuItemState extends ConsumerState<MenuItem> {
   @override
   Widget build(BuildContext context) {
     if (ref.watch(sideBarSizeProvider) == 60) {
-      return InkWell(
-          onHover: (value) {
-            setState(() {
-              isHover = value;
-            });
-            if (widget.onHover != null) {
-              widget.onHover!(value);
-            }
-          },
-          onTap: widget.onTap,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.isSelected!)
+      return Tooltip(
+        message: widget.title ?? '',
+        verticalOffset: -13,
+        height: 25,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        margin: const EdgeInsets.only(left: 50),
+        child: InkWell(
+            onHover: (value) {
+              setState(() {
+                isHover = value;
+              });
+              if (widget.onHover != null) {
+                widget.onHover!(value);
+              }
+            },
+            onTap: widget.onTap,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.isSelected!)
+                  Container(
+                    color: primaryColor,
+                    height: 50,
+                    width: 4,
+                    margin: const EdgeInsets.only(right: 2),
+                  ),
                 Container(
-                  color: primaryColor,
+                  width: 50,
                   height: 50,
-                  width: 4,
-                  margin: const EdgeInsets.only(right: 2),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    color: (isHover || widget.isSelected!)
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.transparent,
+                  ),
+                  child: Center(
+                      child: widget.child ??
+                          Icon(
+                            widget.icon,
+                            color: Colors.black45,
+                            size: 28,
+                          )),
                 ),
-              Container(
-                width: 50,
-                height: 50,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5),
-                  color: (isHover || widget.isSelected!)
-                      ? Colors.black.withOpacity(0.2)
-                      : Colors.transparent,
-                ),
-                child: Center(
-                    child: widget.child ??
-                        Icon(
-                          widget.icon,
-                          color: Colors.black45,
-                          size: 28,
-                        )),
-              ),
-            ],
-          ));
+              ],
+            )),
+      );
     } else {
       return InkWell(
           onHover: (value) {

@@ -1,38 +1,65 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
+import 'package:mongo_dart/mongo_dart.dart';
 import 'package:qc_pos_system/core/functions/string_to_title_case.dart';
-import '../../../../core/constants/enums.dart';
-import '../../../../core/constants/global_string.dart';
-import '../../../../core/functions/generate_id.dart';
-import '../../../../state_manager/data_state.dart';
-import '../../../../state_manager/init_state.dart';
-import '../../../../utils/styles.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_drop_down.dart';
-import '../../../../core/widgets/custom_input.dart';
-import '../../../../core/widgets/smart_dialog.dart';
-import '../../../../models/user_model.dart';
-import '../../../../utils/colors.dart';
+import 'package:qc_pos_system/core/widgets/smart_dialog.dart';
+import '../../../core/constants/enums.dart';
+import '../../../core/constants/global_string.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/custom_drop_down.dart';
+import '../../../core/widgets/custom_input.dart';
+import '../../../state_manager/data_state.dart';
+import '../../../state_manager/init_state.dart';
+import '../../../utils/colors.dart';
+import '../../../utils/styles.dart';
 import 'package:fluent_ui/fluent_ui.dart' as fluent;
 
-class NewUsers extends ConsumerStatefulWidget {
-  const NewUsers({super.key});
+class EditUser extends ConsumerStatefulWidget {
+  const EditUser({super.key});
 
   @override
-  ConsumerState<NewUsers> createState() => _NewUsersState();
+  ConsumerState<EditUser> createState() => _EditUserState();
 }
 
-class _NewUsersState extends ConsumerState<NewUsers> {
-  //create a form key
+class _EditUserState extends ConsumerState<EditUser> {
   final _formKey = GlobalKey<FormState>();
   File? profileImage;
   String? userName, userPhone, userRole, userId;
   String? gender;
   String? prefix;
+
   final _userIdController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    // check if ui is being built for the first time
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      var user = ref.watch(selectedUserProvider);
+      if (user.id != null) {
+        _userIdController.text = user.id!;
+        _fullNameController.text = user.fullName!.split('.')[1];
+        _phoneController.text = user.telephone!;
+        prefix = namePrefix
+            .where((element) => element
+                .toLowerCase()
+                .contains(user.fullName!.split('.')[0].toLowerCase()))
+            .first;
+        gender = user.gender;
+        userRole = user.role!.toTitleCase();
+        if (user.image != null && user.image!.isNotEmpty) {
+          profileImage = File(user.image!);
+        }
+        setState(() {});
+      }
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -65,7 +92,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
                       child: Column(
                     children: [
                       Text(
-                        'New User Registration'.toUpperCase(),
+                        'Edit User'.toUpperCase(),
                         style: getCustomTextStyle(context,
                             fontWeight: FontWeight.bold, color: primaryColor),
                       ),
@@ -73,7 +100,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
                         height: 5,
                       ),
                       const Text(
-                        'Please all the required fields to create a new user',
+                        'Please note that user id can not be changed',
                         style: TextStyle(fontSize: 15),
                       ),
                       const SizedBox(
@@ -81,7 +108,6 @@ class _NewUsersState extends ConsumerState<NewUsers> {
                       ),
                     ],
                   ))
-                  //titleText(context, 'New User', fontSize: 40),
                 ],
               ),
               const Divider(
@@ -128,6 +154,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
               Expanded(
                 child: CustomTextFields(
                   controller: _userIdController,
+                  isReadOnly: true,
                   label: 'Enter User ID*',
                   isCapitalized: true,
                   onSaved: (id) {
@@ -147,11 +174,10 @@ class _NewUsersState extends ConsumerState<NewUsers> {
                 width: 140,
                 child: CustomButton(
                   text: 'Auto Generate',
-                  color: primaryColor,
+                  color: Colors.black45,
                   onPressed: () {
-                    setState(() {
-                      getId();
-                    });
+                    CustomDialog.showToast(
+                        message: 'User id can not be changed');
                   },
                 ),
               )
@@ -165,6 +191,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
             children: [
               Expanded(
                 child: CustomDropDown(
+                    value: prefix,
                     onChanged: (pre) {
                       setState(() {
                         prefix = pre;
@@ -185,6 +212,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
               // gender dropdown
               Expanded(
                   child: CustomDropDown(
+                      value: gender,
                       onChanged: (gen) {
                         setState(() {
                           gender = gen;
@@ -233,6 +261,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
           const SizedBox(height: 24),
           CustomTextFields(
             label: 'Enter User name*',
+            controller: _fullNameController,
             validator: (p0) {
               if (p0!.isEmpty) {
                 return 'Please enter a valid name';
@@ -251,6 +280,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
           CustomTextFields(
             label: 'Enter User Phone Number*',
             keyboardType: TextInputType.phone,
+            controller: _phoneController,
             isDigitOnly: true,
             onSaved: (phone) {
               setState(() {
@@ -265,7 +295,7 @@ class _NewUsersState extends ConsumerState<NewUsers> {
             },
           ),
           const SizedBox(height: 40),
-          CustomButton(text: 'Create User', onPressed: () => saveNewUser()),
+          CustomButton(text: 'Update User', onPressed: () => updateUser()),
         ],
       ),
     );
@@ -312,11 +342,11 @@ class _NewUsersState extends ConsumerState<NewUsers> {
         const SizedBox(
           height: 20,
         ),
-        for (String e in newUserInstruction)
+        for (String e in editUserInstruction)
           Row(
             children: [
               Expanded(
-                child: fluent.Padding(
+                child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                   child: fluent.InfoBar(
@@ -350,73 +380,53 @@ class _NewUsersState extends ConsumerState<NewUsers> {
     }
   }
 
-  void saveNewUser() async {
+  updateUser() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      //check if user id already exist
-      CustomDialog.showLoading(message: 'Saving new user..Please wait.....');
-      var exist = await Generator.checkIfUserExist(userId!);
-      if (exist) {
+      try {
+        String? imagePath;
+        if (profileImage != null) {
+          var path = Directory('${Directory.current.path}/data/images').path;
+          if (!Directory(path).existsSync()) {
+            Directory(path).createSync(recursive: true);
+          }
+          var fileName = profileImage!.path.split('/').last;
+          //get file extension
+          var extension = fileName.split('.').last;
+          var newPath = '$path/$userId.$extension';
+          File(profileImage!.path).copySync(newPath);
+          profileImage = File(newPath);
+          imagePath = profileImage!.path;
+        }
+        final data = modify
+            .set('fullName', '$prefix $userName'.toTitleCase())
+            .set('gender', gender)
+            .set('telephone', userPhone)
+            .set('role', userRole)
+            .set('image', imagePath);
+        ref.read(usersProvider.notifier).updateUser(userId, data);
+        //clear form
+        setState(() {
+          _formKey.currentState!.reset();
+          _userIdController.clear();
+          profileImage = null;
+          userRole = null;
+        });
+        //show success message
+        CustomDialog.dismiss();
+        //show success message and navigate to login page
+        CustomDialog.showSuccess(
+            title: 'Success', message: 'User updated successfully');
+        //navigate back to user list
+        ref
+            .read(homePageItemsProvider.notifier)
+            .setItem(HomePageItemsList.user);
+      } catch (e) {
         CustomDialog.dismiss();
         CustomDialog.showError(
-            title: 'Error',
-            message:
-                'User ID already exist. Click on Generate ID to generate a new ID');
-      } else {
-        try {
-          String? imagePath;
-          if (profileImage != null) {
-            //save image
-            var path = Directory('${Directory.current.path}/data/images').path;
-            if (!Directory(path).existsSync()) {
-              Directory(path).createSync(recursive: true);
-            }
-            var fileName = profileImage!.path.split('/').last;
-            //get file extension
-            var extension = fileName.split('.').last;
-            var newPath = '$path/$userId.$extension';
-            File(profileImage!.path).copySync(newPath);
-            profileImage = File(newPath);
-            imagePath = profileImage!.path;
-          }
-          UserModel userModel = UserModel()
-            ..password = '123456'
-            ..telephone = userPhone!
-            ..role = userRole!.toTitleCase()
-            ..fullName = '$prefix $userName'.toTitleCase()
-            ..id = userId!
-            ..image = imagePath
-            ..status = 'active'
-            ..gender = gender
-            ..createdAt = DateFormat('EE, MMM d yyyy @ HH:mm:ss a')
-                .format(DateTime.now().toUtc());
-
-          ref.read(usersProvider.notifier).saveUser(userModel);
-          //clear form
-          setState(() {
-            _formKey.currentState!.reset();
-            _userIdController.clear();
-            profileImage = null;
-            userRole = null;
-          });
-          //show success message
-          CustomDialog.dismiss();
-          //show success message and navigate to login page
-          CustomDialog.showSuccess(
-              title: 'Success',
-              message: 'User created successfully. User ID is $userId and '
-                  'password is 123456. User will be required to change password on first login');
-        } catch (e) {
-          CustomDialog.dismiss();
-          CustomDialog.showError(
-              title: 'Data Saving Error',
-              message: 'Something went Wrong, Please try again later');
-        }
+            title: 'Data Saving Error',
+            message: 'Something went Wrong, Please try again later');
       }
     }
-  }
-
-  getId() async {
-    _userIdController.text = await Generator.generateUserID();
   }
 }

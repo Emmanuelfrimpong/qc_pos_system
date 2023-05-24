@@ -48,3 +48,8 @@ final List<String> newUserInstruction = [
   'User password by default is 123456.',
   'User will be required to change password on first login.',
 ];
+
+final List<String> editUserInstruction = [
+  'User ID and password will not be changed.',
+  'Edited User will have his previous status.',
+];

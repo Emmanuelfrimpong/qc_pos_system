@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qc_pos_system/presentation/home_page/pages/edit_user.dart';
 import '../../core/constants/enums.dart';
 import 'pages/users/new_user.dart';
 import 'pages/users/users_list.dart';
@@ -64,6 +65,8 @@ class _HomePageState extends ConsumerState<HomePage> with WindowListener {
         return const Text('Settings');
       case HomePageItemsList.newUser:
         return const NewUsers();
+      case HomePageItemsList.editUser:
+        return const EditUser();
       default:
         return const Text('Home');
     }

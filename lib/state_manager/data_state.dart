@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mongo_dart/mongo_dart.dart';
 import 'package:qc_pos_system/core/constants/enums.dart';
 import '../models/company_model.dart';
 import '../models/user_model.dart';
@@ -41,7 +42,9 @@ class UsersProvider extends StateNotifier<List<UserModel>> {
 //? get users from database
   getUsers() async {
     final users = await MongodbAPI.getUsers();
-    state = users;
+    state = users
+        .where((element) => element.status != UserStatus.deleted.name)
+        .toList();
   }
 
   //? save users to database an update state
@@ -100,8 +103,8 @@ class UsersProvider extends StateNotifier<List<UserModel>> {
     final user = state.firstWhere((element) => element.id == id,
         orElse: () => UserModel());
     if (user.id != null) {
-      user.status = status;
-      await MongodbAPI.saveUser(user.toMap());
+      final data = modify.set('status', status);
+      await MongodbAPI.updateUser(id: id, data: data);
       await getUsers();
     }
   }
@@ -110,23 +113,49 @@ class UsersProvider extends StateNotifier<List<UserModel>> {
     final user = state.firstWhere((element) => element.id == id,
         orElse: () => UserModel());
     if (user.id != null) {
-      user.password = '123456';
-      await MongodbAPI.saveUser(user.toMap());
+      final data = modify.set('password', '123456');
+      await MongodbAPI.updateUser(id: id, data: data);
       await getUsers();
     }
+  }
+
+  void updateUser(String? userId, ModifierBuilder data) async {
+    await MongodbAPI.updateUser(id: userId!, data: data);
+    await getUsers();
   }
 }
 
 //? add current user provider
 final currentUserProvider = StateProvider<UserModel>((ref) => UserModel());
 
-//add Future provider of users accept current user
-final usersFutureProvider = FutureProvider<List<UserModel>>((ref) async {
-  var currentUser = ref.watch(currentUserProvider);
-  final users = await MongodbAPI.getUsers();
-  return users
-      .where((element) =>
-          element.id != currentUser.id &&
-          element.status != UserStatus.deleted.toString())
-      .toList();
+//? users search provider
+final queryStringProvider = StateProvider<String>((ref) {
+  return '';
 });
+final filteredUsersToMapProvider =
+    StateProvider<List<Map<String, dynamic>>>((ref) {
+  var data = ref.watch(usersProvider).map((e) => e.toMap()).toList();
+  switch (ref.watch(queryStringProvider)) {
+    case '':
+      return data;
+    default:
+      return data
+          .where((element) =>
+              element['id']
+                  .toLowerCase()
+                  .contains(ref.watch(queryStringProvider).toLowerCase()) ||
+              element['fullName']
+                  .toLowerCase()
+                  .contains(ref.watch(queryStringProvider).toLowerCase()) ||
+              element['telephone']
+                  .toLowerCase()
+                  .contains(ref.watch(queryStringProvider).toLowerCase()) ||
+              element['role']
+                  .toLowerCase()
+                  .contains(ref.watch(queryStringProvider).toLowerCase()))
+          .toList();
+  }
+});
+
+//? add provider for selected user
+final selectedUserProvider = StateProvider<UserModel>((ref) => UserModel());

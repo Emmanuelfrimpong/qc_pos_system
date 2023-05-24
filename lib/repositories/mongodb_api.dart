@@ -105,23 +105,12 @@ class MongodbAPI {
 
   //* Update user in database by deleting the old user and inserting the new one
   //? return true if user updated successfully
-  static Future<bool> updateUser(Map<String, dynamic> user) async {
+  static Future<bool> updateUserStatus(String status, String id) async {
     try {
-      await db!.collection('users').deleteOne(where.eq('id', user['id']));
-      await db!.collection('users').insertOne(user);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  //* Update only user status in database
-  //? return true if user status updated successfully
-  static Future<bool> updateUserStatus(String id, String status) async {
-    try {
+      //find document and update it
       await db!
           .collection('users')
-          .updateOne(where.eq('id', id), modify.set('userStatus', status));
+          .updateOne(where.eq('id', id), modify.set('status', status));
       return true;
     } catch (e) {
       return false;
@@ -130,7 +119,7 @@ class MongodbAPI {
 
   //* Update only user last login in database
   //? return true if user last login updated successfully
-  static Future<bool> updateUserLastLogin(String id, int lastLogin) async {
+  static Future<bool> updateUserLastLogin(String id, String lastLogin) async {
     try {
       await db!
           .collection('users')
@@ -196,12 +185,12 @@ class MongodbAPI {
     }
   }
 
-  //! return map of collections
-
-  static Stream getUsersToStream() {
-    return db!.collection('users').watch(AggregationPipelineBuilder()
-      ..addStage(Sort(
-        {'createdAt': -1},
-      )));
+  static updateUser({required String id, required ModifierBuilder data}) {
+    try {
+      db!.collection('users').updateOne(where.eq('id', id), data);
+      return Future.value('success');
+    } catch (e) {
+      return Future.value('error');
+    }
   }
 }
