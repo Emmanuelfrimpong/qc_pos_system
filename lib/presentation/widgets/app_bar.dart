@@ -5,7 +5,7 @@ import '../../core/widgets/smart_dialog.dart';
 
 class MyAppBar extends StatefulWidget {
   const MyAppBar({super.key, this.children});
-  final List<Widget>? children;
+  final Widget? children;
 
   @override
   State<MyAppBar> createState() => _MyAppBarState();
@@ -21,9 +21,8 @@ class _MyAppBarState extends State<MyAppBar> with WindowListener {
         child: Row(
           children: [
             Expanded(
-                child: Row(
-              children: widget.children ?? const [],
-            )),
+              child: widget.children ?? Container(),
+            ),
             const SizedBox(
               width: 40,
             ),

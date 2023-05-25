@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:qc_pos_system/core/constants/enums.dart';
 import '../models/company_model.dart';
+import '../models/products_model.dart';
 import '../models/user_model.dart';
 import '../repositories/mongodb_api.dart';
 
@@ -159,3 +160,60 @@ final filteredUsersToMapProvider =
 
 //? add provider for selected user
 final selectedUserProvider = StateProvider<UserModel>((ref) => UserModel());
+
+//! end of user and company providers-------------------------------
+//! Product and stock providers-------------------------------------
+
+final productsProvider =
+    StateNotifierProvider<ProductsProvider, List<ProductsModel>>((ref) {
+  return ProductsProvider();
+});
+
+class ProductsProvider extends StateNotifier<List<ProductsModel>> {
+  ProductsProvider() : super([]) {
+    getProducts();
+  }
+//? get products from database
+  getProducts() async {
+    final products = await MongodbAPI.getProducts();
+    state = products;
+  }
+
+  //? save products to database an update state
+  Future<void> saveProduct(ProductsModel product) async {
+    await MongodbAPI.saveProduct(product.toMap());
+    await getProducts();
+  }
+
+  void setProducts(List<ProductsModel> products) {
+    state = products;
+  }
+}
+
+final selectedProductProvider =
+    StateProvider<ProductsModel>((ref) => ProductsModel());
+
+final queryStringProductProvider = StateProvider<String>((ref) {
+  return '';
+});
+
+final filteredProductsToMapProvider =
+    StateProvider<List<Map<String, dynamic>>>((ref) {
+  var data = ref.watch(productsProvider).map((e) => e.toMap()).toList();
+  switch (ref.watch(queryStringProductProvider)) {
+    case '':
+      return data;
+    default:
+      return data
+          .where((element) =>
+              element['id'].toLowerCase().contains(
+                  ref.watch(queryStringProductProvider).toLowerCase()) ||
+              element['name'].toLowerCase().contains(
+                  ref.watch(queryStringProductProvider).toLowerCase()) ||
+              element['category'].toLowerCase().contains(
+                  ref.watch(queryStringProductProvider).toLowerCase()) ||
+              element['price'].toString().toLowerCase().contains(
+                  ref.watch(queryStringProductProvider).toLowerCase()))
+          .toList();
+  }
+});

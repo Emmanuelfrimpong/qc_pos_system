@@ -126,8 +126,8 @@ class _UsersListPageState extends ConsumerState<UsersListPage> {
       ],
       source: _source,
       isLoading: _isLoading,
-      selecteds: [],
-      expanded: [false],
+      selecteds: const [],
+      expanded: const [false],
       footers: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -167,9 +167,9 @@ class _UsersListPageState extends ConsumerState<UsersListPage> {
           onPressed: _currentPage == 1
               ? null
               : () {
-                  var _nextSet = _currentPage - _currentPerPage!;
+                  var nextSet0 = _currentPage - _currentPerPage!;
                   setState(() {
-                    _currentPage = _nextSet > 1 ? _nextSet : 1;
+                    _currentPage = nextSet0 > 1 ? nextSet0 : 1;
                     _resetData(
                         start: _currentPage - 1,
                         data: ref.watch(filteredUsersToMapProvider));
@@ -468,7 +468,7 @@ class _UsersListPageState extends ConsumerState<UsersListPage> {
   }
 
   void editUser(Map<String?, dynamic> row) {
-    // conver the row from <String?, dynamic> to <String, dynamic>
+    // convert the row from <String?, dynamic> to <String, dynamic>
     var newRow = row.map((key, value) => MapEntry(key!, value));
     UserModel selectedUser = UserModel.fromMap(newRow);
     ref.read(selectedUserProvider.notifier).state = selectedUser;

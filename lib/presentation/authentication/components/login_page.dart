@@ -150,6 +150,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         );
         if (mounted) {
           ref.read(currentUserProvider.notifier).state = user;
+          // ignore: unused_result
           ref.refresh(configurationsProvider);
         }
       }

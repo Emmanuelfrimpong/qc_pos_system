@@ -6,15 +6,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:qc_pos_system/core/functions/string_to_title_case.dart';
 import 'package:qc_pos_system/core/widgets/smart_dialog.dart';
-import '../../../core/constants/enums.dart';
-import '../../../core/constants/global_string.dart';
-import '../../../core/widgets/custom_button.dart';
-import '../../../core/widgets/custom_drop_down.dart';
-import '../../../core/widgets/custom_input.dart';
-import '../../../state_manager/data_state.dart';
-import '../../../state_manager/init_state.dart';
-import '../../../utils/colors.dart';
-import '../../../utils/styles.dart';
+import '../../../../core/constants/enums.dart';
+import '../../../../core/constants/global_string.dart';
+import '../../../../core/widgets/custom_button.dart';
+import '../../../../core/widgets/custom_drop_down.dart';
+import '../../../../core/widgets/custom_input.dart';
+import '../../../../state_manager/data_state.dart';
+import '../../../../state_manager/init_state.dart';
+import '../../../../utils/colors.dart';
+import '../../../../utils/styles.dart';
 import 'package:fluent_ui/fluent_ui.dart' as fluent;
 
 class EditUser extends ConsumerStatefulWidget {

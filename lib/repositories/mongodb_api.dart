@@ -1,11 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import '../models/company_model.dart';
+import '../models/products_model.dart';
 import '../models/user_model.dart';
-
 import 'db_connection.dart';
 
 class MongodbAPI {
-  // TODO: Implement MongodbAPI
   //* First we create connection to the database
   //* Then check if the connection is successful then we open the database or show error
 
@@ -14,25 +14,14 @@ class MongodbAPI {
     try {
       db = await DBConnection().getConnection();
     } catch (e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
     }
   }
 
   // return db
   static Db getDatabase() => db!;
-  //! check if the database has collections
-  static Future<bool> hasCollections() async {
-    try {
-      final collections = await db!.getCollectionNames();
-      if (collections.isNotEmpty) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      return false;
-    }
-  }
 
   //! Functions for settings===============================================
   //* Get settings from database
@@ -75,21 +64,6 @@ class MongodbAPI {
     return users.map((e) => UserModel.fromMap(e)).toList();
   }
 
-  //* Get user by id from database
-  static Future<Map<String, dynamic>?> getUserById(String id) async {
-    final user = await db!.collection('users').findOne(where.eq('id', id));
-    return user;
-  }
-
-  //* Get user by id and password from database
-  static Future<Map<String, dynamic>?> getUserByIdAndPassword(
-      String id, String password) async {
-    final user = await db!
-        .collection('users')
-        .findOne(where.eq('id', id).and(where.eq('userPassword', password)));
-    return user;
-  }
-
   //* Save user to database
   //? return true if user saved successfully
   static Future<bool> saveUser(Map<String, dynamic> user) async {
@@ -130,40 +104,6 @@ class MongodbAPI {
     }
   }
 
-  //* Delete user from database
-  //? return true if user deleted successfully
-  static Future<bool> deleteUser(String id) async {
-    try {
-      await db!.collection('users').deleteOne(where.eq('id', id));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // //* save user login
-  // static Future<bool> saveUserLogin(UserModel userLogin) async {
-  //   try {
-  //     //? first delete the old one
-  //     await db.collection('userLogin').deleteOne(where.eq('_id', 'login'));
-  //     //? then insert the new one
-  //     await db.collection('userLogin').insertOne({
-  //       '_id': 'login',
-  //       'user': userLogin.toMap(),
-  //     });
-  //     return true;
-  //   } catch (e) {
-  //     return false;
-  //   }
-  // }
-
-  //* get user login by id
-  static Future<Map<String, dynamic>?> getUserLoggedIn() async {
-    final userLogin =
-        await db!.collection('userLogin').findOne(where.eq('_id', 'login'));
-    return userLogin;
-  }
-
   static Future<String> saveCompanyInfo(CompanyInfoModel companyInfo) {
     try {
       db!.collection('company').insertOne(companyInfo.toMap());
@@ -191,6 +131,28 @@ class MongodbAPI {
       return Future.value('success');
     } catch (e) {
       return Future.value('error');
+    }
+  }
+
+  //! End of user functions====================================================================
+
+  //! Products functions=======================================================================
+  //* Get all products from database
+  static Future<List<ProductsModel>> getProducts() async {
+    final products = await db!.collection('products').find().toList();
+    return products.map((e) => ProductsModel.fromMap(e)).toList();
+  }
+
+  //* Save product to database
+  //? return true if product saved successfully
+  static Future<bool> saveProduct(Map<String, dynamic> product) async {
+    try {
+      //? first delete the old one
+      await db!.collection('products').deleteOne(where.eq('id', product['id']));
+      await db!.collection('products').insertOne(product);
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }

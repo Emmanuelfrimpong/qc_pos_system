@@ -53,8 +53,10 @@ class SideBar extends ConsumerWidget {
                   .read(homePageItemsProvider.notifier)
                   .setItem(HomePageItemsList.user);
             },
-            isSelected:
-                ref.watch(homePageItemsProvider) == HomePageItemsList.user,
+            isSelected: ref.watch(homePageItemsProvider) ==
+                    HomePageItemsList.user ||
+                ref.watch(homePageItemsProvider) == HomePageItemsList.newUser ||
+                ref.watch(homePageItemsProvider) == HomePageItemsList.editUser,
           ),
           const SizedBox(height: 10),
           MenuItem(
@@ -77,8 +79,12 @@ class SideBar extends ConsumerWidget {
                   .read(homePageItemsProvider.notifier)
                   .setItem(HomePageItemsList.products);
             },
-            isSelected:
-                ref.watch(homePageItemsProvider) == HomePageItemsList.products,
+            isSelected: ref.watch(homePageItemsProvider) ==
+                    HomePageItemsList.products ||
+                ref.watch(homePageItemsProvider) ==
+                    HomePageItemsList.newProduct ||
+                ref.watch(homePageItemsProvider) ==
+                    HomePageItemsList.editProduct,
           ),
           const SizedBox(height: 10),
           MenuItem(
@@ -256,6 +262,7 @@ class SideBar extends ConsumerWidget {
             CustomDialog.showLoading(message: 'Logging out...');
             HiveApi.removeLoginData();
             ref.read(currentUserProvider.notifier).state = UserModel();
+            // ignore: unused_result
             ref.refresh(configurationsProvider);
             CustomDialog.dismiss();
           },

@@ -49,4 +49,19 @@ class Generator {
     }
     return true;
   }
+
+  static Future<String> generateProductId() async {
+    var db = MongodbAPI.getDatabase();
+    final collection = db.collection('products');
+    while (true) {
+      final rand = Random();
+      final numChars = List.generate(4, (_) => rand.nextInt(10));
+      final idChars = ['P', ...numChars];
+      String id = idChars.join().toUpperCase();
+      final count = await collection.count(where.eq('_id', id));
+      if (count == 0) {
+        return id;
+      }
+    }
+  }
 }

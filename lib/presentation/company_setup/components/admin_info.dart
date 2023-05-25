@@ -316,6 +316,7 @@ class _AdminInfoState extends ConsumerState<AdminInfo> {
       CustomDialog.showSuccess(
           title: 'Data Saved', message: 'Admin Created successfully');
       //navigate to initial page again
+      // ignore: unused_result
       ref.refresh(configurationsProvider);
     }
   }

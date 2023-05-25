@@ -1,4 +1,5 @@
-import 'package:mongo_dart/mongo_dart.dart' show Db, DbCollection;
+import 'package:flutter/foundation.dart';
+import 'package:mongo_dart/mongo_dart.dart' show Db;
 
 class DBConnection {
   static DBConnection? _instance;
@@ -19,7 +20,9 @@ class DBConnection {
         _db = Db(_getConnectionString());
         await _db!.open();
       } catch (e) {
-        print(e);
+        if (kDebugMode) {
+          print(e);
+        }
       }
     }
     return _db!;
