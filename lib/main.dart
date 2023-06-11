@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
           PointerDeviceKind.touch,
           PointerDeviceKind.stylus,
           PointerDeviceKind.unknown
+
         },
       ),
       builder: FlutterSmartDialog.init(),
